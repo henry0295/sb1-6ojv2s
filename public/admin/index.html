@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Center - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <!-- Total Calls -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-sm font-medium text-gray-500">Total Calls Today</h3>
+                    <p class="text-2xl font-semibold mt-2">{{ stats.totalCalls }}</p>
+                    <div class="mt-2">
+                        <span class="text-green-500 text-sm">↑ {{ stats.callsGrowth }}%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs yesterday</span>
+                    </div>
+                </div>
+
+                <!-- Active Agents -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-sm font-medium text-gray-500">Active Agents</h3>
+                    <p class="text-2xl font-semibold mt-2">{{ stats.activeAgents }}</p>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" 
+                                 :style="{ width: stats.activeAgentsPercent + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Average Handle Time -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-sm font-medium text-gray-500">Avg Handle Time</h3>
+                    <p class="text-2xl font-semibold mt-2">{{ stats.avgHandleTime }}</p>
+                    <div class="mt-2">
+                        <span class="text-red-500 text-sm">↑ {{ stats.handleTimeGrowth }}%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs target</span>
+                    </div>
+                </div>
+
+                <!-- Service Level -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-sm font-medium text-gray-500">Service Level</h3>
+                    <p class="text-2xl font-semibold mt-2">{{ stats.serviceLevel }}%</p>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" 
+                                 :style="{ width: stats.serviceLevel + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Tables -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Call Volume Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Call Volume</h3>
+                    <canvas id="callVolumeChart"></canvas>
+                </div>
+
+                <!-- Active Campaigns -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Active Campaigns</h3>
+                    <div class="space-y-4">
+                        <div v-for="campaign in campaigns" :key="campaign.id" 
+                             class="border-b pb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <h4 class="font-medium">{{ campaign.name }}</h4>
+                                    <p class="text-sm text-gray-500">{{ campaign.type }}</p>
+                                </div>
+                                <span class="text-sm font-medium">{{ campaign.progress }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" 
+                                     :style="{ width: campaign.progress + '%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    stats: {
+                        totalCalls: 1234,
+                        callsGrowth: 12,
+                        activeAgents: 45,
+                        activeAgentsPercent: 75,
+                        avgHandleTime: '4:32',
+                        handleTimeGrowth: 3,
+                        serviceLevel: 92
+                    },
+                    campaigns: [
+                        { id: 1, name: 'Customer Survey', type: 'Predictive', progress: 75 },
+                        { id: 2, name: 'Sales Outreach', type: 'Progressive', progress: 45 },
+                        { id: 3, name: 'Service Follow-up', type: 'Voice Broadcast', progress: 90 }
+                    ]
+                }
+            },
+            mounted() {
+                this.initCharts()
+                this.connectWebSocket()
+            },
+            methods: {
+                initCharts() {
+                    const ctx = document.getElementById('callVolumeChart')
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                            datasets: [{
+                                label: 'Answered Calls',
+                                data: [100, 130, 150, 120, 140],
+                                backgroundColor: '#4F46E5'
+                            }, {
+                                label: 'Abandoned Calls',
+                                data: [20, 20, 30, 20, 20],
+                                backgroundColor: '#EF4444'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    })
+                },
+                connectWebSocket() {
+                    // Implement WebSocket connection for real-time updates
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

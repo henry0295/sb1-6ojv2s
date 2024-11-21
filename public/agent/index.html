@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Center - Agent Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-gray-900">Agent Dashboard</h1>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Agent: {{ agentName }}</span>
+                        <span :class="statusClass" class="px-3 py-1 rounded-full text-sm">
+                            {{ status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Status Controls -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex space-x-4">
+                    <button @click="setStatus('available')" 
+                            :class="status === 'available' ? 'bg-green-600 text-white' : 'bg-gray-100'"
+                            class="px-4 py-2 rounded-lg">
+                        Available
+                    </button>
+                    <button @click="setStatus('break')"
+                            :class="status === 'break' ? 'bg-yellow-600 text-white' : 'bg-gray-100'"
+                            class="px-4 py-2 rounded-lg">
+                        Break
+                    </button>
+                </div>
+            </div>
+
+            <!-- Call Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Current Call -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4">Current Call</h2>
+                    <div v-if="currentCall">
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600">Customer</p>
+                            <p class="font-medium">{{ currentCall.customerName }}</p>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600">Phone</p>
+                            <p class="font-medium">{{ currentCall.phoneNumber }}</p>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600">Duration</p>
+                            <p class="font-medium">{{ callDuration }}</p>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button @click="endCall" class="bg-red-600 text-white px-4 py-2 rounded-lg">
+                                End Call
+                            </button>
+                            <button @click="holdCall" class="bg-gray-100 px-4 py-2 rounded-lg">
+                                Hold
+                            </button>
+                            <button @click="transferCall" class="bg-gray-100 px-4 py-2 rounded-lg">
+                                Transfer
+                            </button>
+                        </div>
+                    </div>
+                    <div v-else class="text-center text-gray-500">
+                        No active call
+                    </div>
+                </div>
+
+                <!-- Queue Status -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4">Queue Status</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Calls in Queue</span>
+                            <span class="font-medium">{{ queueCount }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Average Wait Time</span>
+                            <span class="font-medium">{{ avgWaitTime }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Service Level</span>
+                            <span class="font-medium">{{ serviceLevel }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    agentName: 'John Doe',
+                    status: 'available',
+                    currentCall: null,
+                    queueCount: 12,
+                    avgWaitTime: '1:30',
+                    serviceLevel: 95,
+                    callStartTime: null
+                }
+            },
+            computed: {
+                statusClass() {
+                    return {
+                        'available': 'bg-green-100 text-green-800',
+                        'break': 'bg-yellow-100 text-yellow-800',
+                        'on-call': 'bg-blue-100 text-blue-800'
+                    }[this.status]
+                },
+                callDuration() {
+                    if (!this.callStartTime) return '0:00'
+                    const diff = Math.floor((Date.now() - this.callStartTime) / 1000)
+                    const minutes = Math.floor(diff / 60)
+                    const seconds = diff % 60
+                    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+                }
+            },
+            methods: {
+                setStatus(newStatus) {
+                    this.status = newStatus
+                    // Send status update to server
+                },
+                endCall() {
+                    this.currentCall = null
+                    this.callStartTime = null
+                    this.status = 'available'
+                },
+                holdCall() {
+                    // Implement hold functionality
+                },
+                transferCall() {
+                    // Implement transfer functionality
+                }
+            },
+            mounted() {
+                // Connect to WebSocket for real-time updates
+                this.connectWebSocket()
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
